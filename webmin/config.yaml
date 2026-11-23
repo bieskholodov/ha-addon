@@ -1,6 +1,6 @@
 name: "Webmin"
 description: "Веб-интерфейс для управления файлами и сервисами в контейнере"
-version: "1.0.4"
+version: "1.0.5"
 slug: "webmin"
 init: false
 arch:
@@ -10,7 +10,7 @@ arch:
 ports:
   10000/tcp: 10000
 ports_description:
-  10000/tcp: "Веб-интерфейс Webmin (HTTPS)"
+  10000/tcp: "Веб-интерфейс Webmin"
 map:
   - config:rw
   - ssl:rw
@@ -18,8 +18,14 @@ map:
   - share:rw
   - backup:rw
   - media:rw
-schema:
-  password: password
 options:
   password: "changeme"
+  ssl: true
+  certfile: "fullchain.pem"
+  keyfile: "privkey.pem"
+schema:
+  password: password
+  ssl: bool
+  certfile: str
+  keyfile: str
 
