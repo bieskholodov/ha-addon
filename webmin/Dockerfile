@@ -1,7 +1,6 @@
 ARG BUILD_FROM
 FROM $BUILD_FROM
 
-# Установка зависимостей и репозитория Webmin
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     gnupg \
@@ -13,12 +12,18 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libio-pty-perl \
     unzip \
     shared-mime-info \
-    && curl -o setup-repos.sh https://githubusercontent.com \
-    && sh setup-repos.sh -f \
+    ca-certificates \
+    && curl -fsSL https://webmin.com | gpg --dearmor -o /usr/share/keyrings/webmin.gpg \
+    && echo "deb [signed-by=/usr/share/keyrings/webmin.gpg] https://webmin.com sarge contrib" > /etc/apt/sources.list.d/webmin.list \
     && apt-get update \
     && apt-get install -y --no-install-recommends webmin \
     && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* setup-repos.sh
+    && rm -rf /var/lib/apt/lists/*
+
+COPY run.sh /
+RUN chmod a+x /run.sh
+
+CMD [ "/run.sh" ]
 
 COPY run.sh /
 RUN chmod a+x /run.sh
