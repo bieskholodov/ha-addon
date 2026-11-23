@@ -3,6 +3,7 @@ description: "Веб-интерфейс для управления файлам
 version: "1.0.6"
 slug: "webmin"
 init: false
+host_network: true
 arch:
   - aarch64
   - amd64
@@ -28,4 +29,3 @@ schema:
   ssl: bool
   certfile: str
   keyfile: str
-
