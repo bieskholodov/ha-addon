@@ -15,6 +15,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     iproute2 \
     net-tools \
     procps \
+    nmap \
+    iputils-ping \
     && H="github.com" \
     && P="webmin/webmin/releases/download/2.670/webmin_2.670_all.deb" \
     && curl -fsSL -o /tmp/webmin.deb "https://${H}/${P}" \
@@ -27,4 +29,3 @@ COPY run.sh /
 RUN chmod a+x /run.sh
 
 CMD [ "/run.sh" ]
-
