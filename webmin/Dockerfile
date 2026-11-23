@@ -3,7 +3,6 @@ FROM $BUILD_FROM
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
-    gnupg \
     perl \
     libnet-ssleay-perl \
     openssl \
@@ -13,10 +12,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     unzip \
     shared-mime-info \
     ca-certificates \
-    && curl -fsSL https://webmin.com | gpg --dearmor -o /usr/share/keyrings/webmin.gpg \
-    && echo "deb [signed-by=/usr/share/keyrings/webmin.gpg] https://webmin.com sarge contrib" > /etc/apt/sources.list.d/webmin.list \
-    && apt-get update \
-    && apt-get install -y --no-install-recommends webmin \
+    && H="github.com" \
+    && P="webmin/webmin/releases/download/2.670/webmin_2.670_all.deb" \
+    && curl -fsSL -o /tmp/webmin.deb "https://${H}/${P}" \
+    && apt-get install -y --no-install-recommends /tmp/webmin.deb \
+    && rm -f /tmp/webmin.deb \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -24,9 +24,3 @@ COPY run.sh /
 RUN chmod a+x /run.sh
 
 CMD [ "/run.sh" ]
-
-COPY run.sh /
-RUN chmod a+x /run.sh
-
-CMD [ "/run.sh" ]
-
