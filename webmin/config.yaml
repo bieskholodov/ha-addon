@@ -1,1 +1,25 @@
+name: "Webmin"
+description: "Веб-интерфейс для управления файлами и сервисами в контейнере"
+version: "1.0.0"
+slug: "webmin"
+init: false
+arch:
+  - aarch64
+  - amd64
+  - armv7
+ports:
+  10000/tcp: 10000
+ports_description:
+  10000/tcp: "Веб-интерфейс Webmin (HTTPS)"
+map:
+  - config:rw
+  - ssl:rw
+  - addons:rw
+  - share:rw
+  - backup:rw
+  - media:rw
+schema:
+  password: password
+options:
+  password: "changeme"
 
