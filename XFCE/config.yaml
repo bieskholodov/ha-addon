@@ -1,5 +1,5 @@
 name: "Webtop XFCE (Русский)"
-version: "1.1.5"
+version: "1.1.6"
 slug: "webtop_ru"
 description: "Рабочий стол Ubuntu XFCE с русским языком и полным доступом к дискам"
 init: false
@@ -7,18 +7,21 @@ apparmor: false
 audio: true
 video: true
 tmpfs: true
+ingress: true
+ingress_port: 3000
+panel_icon: "mdi:monitor"
+panel_title: "Рабочий стол"
 arch:
   - amd64
   - aarch64
 startup: services
 boot: manual
-webui: "https://[HOST]:[PORT:3001]"
 ports:
-  3000/tcp: 3000
+  3000/tcp: null
   3001/tcp: 3001
 ports_description:
-  3000/tcp: "Web UI (HTTP)"
-  3001/tcp: "Web UI (HTTPS)"
+  3000/tcp: "Web UI (HTTP - для Ingress)"
+  3001/tcp: "Web UI (HTTPS - прямой доступ)"
 environment:
   START_DOCKER: "false"
   TITLE: "Ubuntu XFCE (Русский)"
