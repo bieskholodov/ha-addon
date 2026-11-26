@@ -1,10 +1,15 @@
 name: "Webtop XFCE (Русский)"
-version: "1.0.5"
+version: "1.0.8"
 slug: "webtop_ru"
-description: "Рабочий стол Ubuntu XFCE с русским языком и доступом к дискам"
+description: "Рабочий стол Ubuntu XFCE с русским языком и полным доступом к дискам"
 init: false
 apparmor: false
 udev: true
+host_dbus: true
+audio: true
+video: true
+tmpfs: true
+full_access: true
 arch:
   - amd64
   - aarch64
@@ -17,6 +22,11 @@ ports:
 ports_description:
   3000/tcp: "Web UI (HTTP)"
   3001/tcp: "Web UI (HTTPS)"
+environment:
+  START_DOCKER: "false"
+  TITLE: "Ubuntu XFCE (Русский)"
+  LC_ALL: "ru_RU.UTF-8"
+  LANG: "ru_RU.UTF-8"
 map:
   - homeassistant_config:rw
   - media:rw
@@ -24,13 +34,12 @@ map:
   - backup:rw
   - ssl:rw
 options:
-  PUID: 0
-  PGID: 0
+  PUID: 1000
+  PGID: 1000
   TZ: "Europe/Chisinau"
   LC_ALL: "ru_RU.UTF-8"
   KEYBOARD: "ru-ru-qwerty"
   DRINODE: "/dev/dri/renderD128"
-  LOCAL_DISKS: ""
   CUSTOM_USER: ""
   PASSWORD: ""
 schema:
@@ -40,27 +49,6 @@ schema:
   LC_ALL: str
   KEYBOARD: str
   DRINODE: str?
-  LOCAL_DISKS: str?
   CUSTOM_USER: str?
   PASSWORD: password?
-privileged:
-  - SYS_ADMIN
-  - DAC_READ_SEARCH
-  - SYS_PTRACE
-  - MKNOD
-devices:
-  - /dev/dri
-  - /dev/dri/card0
-  - /dev/dri/renderD128
-  - /dev/sda
-  - /dev/sda1
-  - /dev/sda2
-  - /dev/sdb
-  - /dev/sdb1
-  - /dev/sdb2
-  - /dev/sdc
-  - /dev/sdc1
-  - /dev/nvme0n1
-  - /dev/nvme0n1p1
-  - /dev/nvme0n1p2
 shm_size: "1g"
