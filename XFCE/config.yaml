@@ -1,5 +1,5 @@
 name: "Webtop XFCE (Русский)"
-version: "1.0.1"
+version: "1.0.2"
 slug: "webtop_ru"
 description: "Рабочий стол Ubuntu XFCE с русским языком"
 init: false
