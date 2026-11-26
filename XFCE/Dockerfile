@@ -20,7 +20,9 @@ RUN apt-get update && \
     locale-gen ru_RU.UTF-8 && \
     update-locale LANG=ru_RU.UTF-8 LC_ALL=ru_RU.UTF-8 && \
     apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+    rm -rf /var/lib/apt/lists/* && \
+    rm -f /etc/s6-overlay/s6-rc.d/user/contents.d/svc-docker \
+          /etc/s6-overlay/s6-rc.d/user2/contents.d/svc-docker
 
 RUN mkdir -p /etc/cont-init.d && \
     printf '#!/usr/bin/with-contenv bash\n\
