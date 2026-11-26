@@ -1,7 +1,7 @@
 name: "Webtop XFCE (Русский)"
-version: "1.0.8"
+version: "1.0.9"
 slug: "webtop_ru"
-description: "Рабочий стол Ubuntu XFCE с русским языком и полным доступом к дискам"
+description: "Рабочий стол Ubuntu XFCE с русским языком и доступом к дискам"
 init: false
 apparmor: false
 udev: true
@@ -9,7 +9,6 @@ host_dbus: true
 audio: true
 video: true
 tmpfs: true
-full_access: true
 arch:
   - amd64
   - aarch64
@@ -51,4 +50,12 @@ schema:
   DRINODE: str?
   CUSTOM_USER: str?
   PASSWORD: password?
+privileged:
+  - SYS_ADMIN
+  - DAC_READ_SEARCH
+  - SYS_PTRACE
+devices:
+  - /dev/dri
+  - /dev/dri/card0
+  - /dev/dri/renderD128
 shm_size: "1g"
