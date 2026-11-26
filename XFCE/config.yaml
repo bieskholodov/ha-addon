@@ -1,13 +1,14 @@
 name: "Webtop XFCE (Русский)"
-version: "1.0.0"
+version: "1.0.1"
 slug: "webtop_ru"
-description: "Рабочий стол Ubuntu XFCE с русским языком и предустановленными пакетами"
+description: "Рабочий стол Ubuntu XFCE с русским языком"
+init: false
 arch:
   - amd64
   - aarch64
 startup: services
 boot: manual
-webui: "http://[HOST]:[PORT:3000]"
+webui: "https://[HOST]:[PORT:3001]"
 ports:
   3000/tcp: 3000
   3001/tcp: 3001
@@ -35,7 +36,7 @@ schema:
   PASSWORD: password?
 privileged:
   - SYS_ADMIN
+  - DAC_READ_SEARCH
 devices:
   - /dev/dri
 shm_size: "1g"
-
