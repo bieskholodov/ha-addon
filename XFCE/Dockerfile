@@ -29,6 +29,12 @@ RUN apt-get update && \
     rm -f /etc/s6-overlay/s6-rc.d/user/contents.d/svc-docker \
           /etc/s6-overlay/s6-rc.d/user2/contents.d/svc-docker
 
+RUN mkdir -p /etc/udev/rules.d && \
+    printf 'ENV{ID_FS_LABEL}=="hassos-*", ENV{UDISKS_IGNORE}="1"\n\
+KERNEL=="nvme0n1*", ENV{UDISKS_IGNORE}="1"\n\
+KERNEL=="zram*", ENV{UDISKS_IGNORE}="1"\n\
+KERNEL=="loop*", ENV{UDISKS_IGNORE}="1"\n' > /etc/udev/rules.d/99-hide-hassos.rules
+
 RUN mkdir -p /custom-cont-init.d && \
     printf '#!/bin/bash\n\
 echo "=== Configuring HA Options & ACL Disk Permissions ==="\n\
@@ -41,7 +47,7 @@ fi\n\
 chmod 666 /dev/dri/* 2>/dev/null || true\n\
 rm -rf /config/.cache/sessions/* /tmp/.X*-lock 2>/dev/null || true\n\
 \n\
-ABC_UID=$(id -u abc 2>/dev/null || echo 911)\n\
+ABC_UID=$(id -u abc 2>/dev/null || echo 1000)\n\
 setfacl -m u:${ABC_UID}:rwx /media /media/* /homeassistant /share /backup /ssl 2>/dev/null || true\n\
 setfacl -d -m u:${ABC_UID}:rwx /media/* /homeassistant /share /backup /ssl 2>/dev/null || true\n' > /custom-cont-init.d/00-ha-options && \
     chmod +x /custom-cont-init.d/00-ha-options
