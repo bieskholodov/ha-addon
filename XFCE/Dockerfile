@@ -15,8 +15,19 @@ RUN apt-get update && \
         engrampa \
         curl \
         wget \
-        nano && \
+        nano \
+        jq && \
     locale-gen ru_RU.UTF-8 && \
     update-locale LANG=ru_RU.UTF-8 LC_ALL=ru_RU.UTF-8 && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
+
+RUN mkdir -p /etc/cont-init.d && \
+    printf '#!/usr/bin/with-contenv bash\n\
+if [ -f /data/options.json ]; then\n\
+  for s in $(jq -r "to_entries|map(\"\(.key)=\(.value|tostring)\")|.[]" /data/options.json); do\n\
+    export "$s"\n\
+    echo -n "${s#*=}" > "/var/run/s6/container_environment/${s%%=*}"\n\
+  done\n\
+fi\n' > /etc/cont-init.d/00-ha-options && \
+    chmod +x /etc/cont-init.d/00-ha-options
