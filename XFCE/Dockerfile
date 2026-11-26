@@ -20,7 +20,10 @@ RUN apt-get update && \
         ntfs-3g \
         exfatprogs \
         util-linux \
-        acl && \
+        acl \
+        intel-media-va-driver \
+        mesa-va-drivers \
+        vainfo && \
     sed -i '/ru_RU.UTF-8/s/^# //g' /etc/locale.gen && \
     locale-gen ru_RU.UTF-8 && \
     update-locale LANG=ru_RU.UTF-8 LC_ALL=ru_RU.UTF-8 && \
