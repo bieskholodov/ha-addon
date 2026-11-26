@@ -21,7 +21,7 @@ RUN apt-get update && \
         ntfs-3g \
         exfatprogs \
         util-linux \
-        bindfs && \
+        acl && \
     locale-gen ru_RU.UTF-8 && \
     update-locale LANG=ru_RU.UTF-8 LC_ALL=ru_RU.UTF-8 && \
     apt-get clean && \
@@ -31,7 +31,7 @@ RUN apt-get update && \
 
 RUN mkdir -p /custom-cont-init.d && \
     printf '#!/bin/bash\n\
-echo "=== Configuring HA Options & Disk Access ==="\n\
+echo "=== Configuring HA Options & ACL Disk Permissions ==="\n\
 if [ -f /data/options.json ]; then\n\
   for s in $(jq -r "to_entries|map(\"\(.key)=\(.value|tostring)\")|.[]" /data/options.json); do\n\
     export "$s"\n\
@@ -41,13 +41,7 @@ fi\n\
 chmod 666 /dev/dri/* 2>/dev/null || true\n\
 rm -rf /config/.cache/sessions/* /tmp/.X*-lock 2>/dev/null || true\n\
 \n\
-mkdir -p /mnt/disks\n\
-for dir in /media/*; do\n\
-  if [ -d "$dir" ]; then\n\
-    name=$(basename "$dir")\n\
-    mkdir -p "/mnt/disks/$name"\n\
-    bindfs -u 1000 -g 1000 --perms=0775 "$dir" "/mnt/disks/$name" 2>/dev/null || true\n\
-  fi\n\
-done\n\
-chown -R 1000:1000 /mnt/disks 2>/dev/null || true\n' > /custom-cont-init.d/00-ha-options && \
+ABC_UID=$(id -u abc 2>/dev/null || echo 911)\n\
+setfacl -m u:${ABC_UID}:rwx /media /media/* /homeassistant /share /backup /ssl 2>/dev/null || true\n\
+setfacl -d -m u:${ABC_UID}:rwx /media/* /homeassistant /share /backup /ssl 2>/dev/null || true\n' > /custom-cont-init.d/00-ha-options && \
     chmod +x /custom-cont-init.d/00-ha-options
