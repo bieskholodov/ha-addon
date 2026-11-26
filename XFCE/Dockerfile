@@ -16,7 +16,8 @@ RUN apt-get update && \
         curl \
         wget \
         nano \
-        jq && \
+        jq \
+        dbus-x11 && \
     locale-gen ru_RU.UTF-8 && \
     update-locale LANG=ru_RU.UTF-8 LC_ALL=ru_RU.UTF-8 && \
     apt-get clean && \
@@ -31,5 +32,7 @@ if [ -f /data/options.json ]; then\n\
     export "$s"\n\
     echo -n "${s#*=}" > "/var/run/s6/container_environment/${s%%=*}"\n\
   done\n\
-fi\n' > /etc/cont-init.d/00-ha-options && \
+fi\n\
+chmod 666 /dev/dri/* 2>/dev/null || true\n\
+rm -rf /config/.cache/sessions/* /tmp/.X*-lock 2>/dev/null || true\n' > /etc/cont-init.d/00-ha-options && \
     chmod +x /etc/cont-init.d/00-ha-options
