@@ -1,4 +1,4 @@
-ARG BUILD_FROM=lscr.io/linuxserver/webtop:ubuntu-xfce
+ARG BUILD_FROM=lscr.io/linuxserver/webtop:debian-xfce
 FROM ${BUILD_FROM}
 
 ENV DEBIAN_FRONTEND=noninteractive \
@@ -9,7 +9,6 @@ ENV DEBIAN_FRONTEND=noninteractive \
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         locales \
-        language-pack-ru \
         fonts-dejavu \
         fonts-liberation \
         engrampa \
@@ -22,6 +21,7 @@ RUN apt-get update && \
         exfatprogs \
         util-linux \
         acl && \
+    sed -i '/ru_RU.UTF-8/s/^# //g' /etc/locale.gen && \
     locale-gen ru_RU.UTF-8 && \
     update-locale LANG=ru_RU.UTF-8 LC_ALL=ru_RU.UTF-8 && \
     apt-get clean && \
