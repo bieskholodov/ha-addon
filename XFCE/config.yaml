@@ -1,8 +1,9 @@
 name: "Webtop XFCE (Русский)"
-version: "1.0.2"
+version: "1.0.3"
 slug: "webtop_ru"
 description: "Рабочий стол Ubuntu XFCE с русским языком"
 init: false
+apparmor: false
 arch:
   - amd64
   - aarch64
@@ -24,6 +25,7 @@ options:
   TZ: "Europe/Chisinau"
   LC_ALL: "ru_RU.UTF-8"
   KEYBOARD: "ru-ru-qwerty"
+  DRINODE: "/dev/dri/renderD128"
   CUSTOM_USER: ""
   PASSWORD: ""
 schema:
@@ -32,11 +34,15 @@ schema:
   TZ: str
   LC_ALL: str
   KEYBOARD: str
+  DRINODE: str?
   CUSTOM_USER: str?
   PASSWORD: password?
 privileged:
   - SYS_ADMIN
   - DAC_READ_SEARCH
+  - SYS_PTRACE
 devices:
   - /dev/dri
+  - /dev/dri/card0
+  - /dev/dri/renderD128
 shm_size: "1g"
