@@ -104,7 +104,7 @@ if ! grep -q "nofork=" /etc/webmin/miniserv.conf; then
     echo "nofork=1" >> /etc/webmin/miniserv.conf
 fi
 
-# 4. Базовые сетевые настройки Webmin
+# 4. Базовые сетевые настройки Webmin, WebSocket и обновление графиков в реальном времени
 sed -i '/^referers_none=/d' /etc/webmin/config
 echo "referers_none=1" >> /etc/webmin/config
 sed -i '/^relative_redir=/d' /etc/webmin/config
@@ -116,6 +116,15 @@ sed -i '/^trust_real_ip=/d' /etc/webmin/miniserv.conf
 echo "trust_real_ip=1" >> /etc/webmin/miniserv.conf
 sed -i '/^cookie_same_site=/d' /etc/webmin/miniserv.conf
 echo "cookie_same_site=None" >> /etc/webmin/miniserv.conf
+sed -i '/^websockets=/d' /etc/webmin/miniserv.conf
+echo "websockets=1" >> /etc/webmin/miniserv.conf
+
+# Включаем обновление статистики в реальном времени для темы Authentic Theme
+mkdir -p /etc/webmin/authentic-theme
+touch /etc/webmin/authentic-theme/settings.js
+if ! grep -q "settings_sysinfo_real_time_status" /etc/webmin/authentic-theme/settings.js; then
+    echo "settings_sysinfo_real_time_status = true;" >> /etc/webmin/authentic-theme/settings.js
+fi
 
 # Очищаем старые настройки путей, сессий, автовхода и ограничений IP перед выбором режима
 sed -i '/^webprefix=/d' /etc/webmin/config
