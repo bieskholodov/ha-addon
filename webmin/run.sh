@@ -22,10 +22,12 @@ EOF
     fi
 done
 
-# 1. Папка для постоянного хранения настроек Webmin и Cron (переживает обновления)
+# 1. Папка для постоянного хранения настроек Webmin, Cron и Samba (переживает обновления)
 PERSIST_DIR="/data/webmin_persist"
 mkdir -p "${PERSIST_DIR}/etc_webmin"
 mkdir -p "${PERSIST_DIR}/cron_tabs"
+mkdir -p "${PERSIST_DIR}/etc_samba"
+mkdir -p "${PERSIST_DIR}/var_lib_samba"
 
 # Переносим стандартные конфиги Webmin в постоянную папку при самом первом запуске
 if [ ! -f "${PERSIST_DIR}/etc_webmin/miniserv.conf" ]; then
@@ -34,7 +36,7 @@ fi
 rm -rf /etc/webmin
 ln -s "${PERSIST_DIR}/etc_webmin" /etc/webmin
 
-# Переносим задания Cron в постоянную папку
+# Переносим задания Cron в постоянную папку и восстанавливаем строгие права
 if [ -d /var/spool/cron/crontabs ] && [ ! -L /var/spool/cron/crontabs ]; then
     cp -a /var/spool/cron/crontabs/. "${PERSIST_DIR}/cron_tabs/" 2>/dev/null || true
     rm -rf /var/spool/cron/crontabs
@@ -43,10 +45,31 @@ mkdir -p /var/spool/cron
 ln -s "${PERSIST_DIR}/cron_tabs" /var/spool/cron/crontabs
 chmod 1730 "${PERSIST_DIR}/cron_tabs"
 chown root:crontab "${PERSIST_DIR}/cron_tabs"
+if [ -f "${PERSIST_DIR}/cron_tabs/root" ]; then
+    chown root:crontab "${PERSIST_DIR}/cron_tabs/root"
+    chmod 600 "${PERSIST_DIR}/cron_tabs/root"
+fi
 
-# 2. Установка пароля root из конфигурации аддона
+# Переносим настройки и базу паролей Samba в постоянную папку
+if [ ! -f "${PERSIST_DIR}/etc_samba/smb.conf" ] && [ -d /etc/samba ]; then
+    cp -a /etc/samba/. "${PERSIST_DIR}/etc_samba/"
+fi
+rm -rf /etc/samba
+ln -s "${PERSIST_DIR}/etc_samba" /etc/samba
+
+if [ -d /var/lib/samba ] && [ ! -L /var/lib/samba ]; then
+    if [ -z "$(ls -A "${PERSIST_DIR}/var_lib_samba")" ]; then
+        cp -a /var/lib/samba/. "${PERSIST_DIR}/var_lib_samba/"
+    fi
+    rm -rf /var/lib/samba
+fi
+ln -s "${PERSIST_DIR}/var_lib_samba" /var/lib/samba
+mkdir -p /var/log/samba /run/samba
+
+# 2. Установка пароля root для системы и Samba из конфигурации аддона
 PASSWORD=$(bashio::config 'password')
 echo "root:${PASSWORD}" | chpasswd
+printf "%s\n%s\n" "${PASSWORD}" "${PASSWORD}" | smbpasswd -a -s root >/dev/null 2>&1 || true
 
 # 3. Запрещаем Webmin уходить в фон
 if ! grep -q "nofork=" /etc/webmin/miniserv.conf; then
@@ -84,9 +107,13 @@ else
     sed -i 's/^ssl=.*/ssl=0/' /etc/webmin/miniserv.conf
 fi
 
-# 7. Запуск фоновой службы Cron
+# 7. Запуск фоновых служб Cron и Samba
 bashio::log.info "Запуск службы Cron..."
 service cron start
+
+bashio::log.info "Запуск служб Samba (smbd, nmbd)..."
+service smbd start || smbd -D
+service nmbd start || nmbd -D
 
 # 8. Запуск Webmin
 bashio::log.info "Запуск Webmin..."
