@@ -7,6 +7,7 @@ RUN rm -f /etc/dpkg/dpkg.cfg.d/* \
     curl \
     cron \
     smartmontools \
+    fdisk \
     rsync \
     samba \
     mc \
