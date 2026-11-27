@@ -1,6 +1,6 @@
 #!/usr/bin/with-contenv bashio
 
-# 0. Настройка русской локали для всех интерактивных сессий (включая терминал Webmin, SSH и mc)
+# 0. Настройка русской локали и переменных Home Assistant CLI (ha) для всех сессий
 export LANG=ru_RU.UTF-8
 export LANGUAGE=ru_RU:ru
 export LC_ALL=ru_RU.UTF-8
@@ -13,6 +13,8 @@ EOF
 
 for rc_file in /etc/profile /etc/bash.bashrc /root/.bashrc; do
     touch "$rc_file"
+    sed -i '/^export SUPERVISOR_TOKEN=/d' "$rc_file"
+    sed -i '/^export HASSIO_TOKEN=/d' "$rc_file"
     if ! grep -q "LC_ALL=ru_RU.UTF-8" "$rc_file"; then
         cat << 'EOF' >> "$rc_file"
 export LANG=ru_RU.UTF-8
@@ -20,12 +22,11 @@ export LANGUAGE=ru_RU:ru
 export LC_ALL=ru_RU.UTF-8
 EOF
     fi
+    if [ -n "${SUPERVISOR_TOKEN:-}" ]; then
+        echo "export SUPERVISOR_TOKEN=${SUPERVISOR_TOKEN}" >> "$rc_file"
+        echo "export HASSIO_TOKEN=${SUPERVISOR_TOKEN}" >> "$rc_file"
+    fi
 done
-
-# Пробрасываем токен Supervisor в SSH-сессии для работы команды ha
-if [ -n "${SUPERVISOR_TOKEN:-}" ] && ! grep -q "SUPERVISOR_TOKEN" /root/.bashrc; then
-    echo "export SUPERVISOR_TOKEN=${SUPERVISOR_TOKEN}" >> /root/.bashrc
-fi
 
 # 1. Папка для постоянного хранения настроек Webmin, Cron, Samba и SSH (переживает обновления)
 PERSIST_DIR="/data/webmin_persist"
