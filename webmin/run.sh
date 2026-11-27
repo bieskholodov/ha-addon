@@ -94,17 +94,20 @@ if ! grep -q "^PermitRootLogin" /etc/ssh/sshd_config; then
     echo "PermitRootLogin yes" >> /etc/ssh/sshd_config
 fi
 
-# 2. Установка пароля root для системы, SSH и Samba из конфигурации аддона
+# 2. Установка пароля root для системы, Webmin, SSH и Samba из конфигурации аддона
 PASSWORD=$(bashio::config 'password')
 echo "root:${PASSWORD}" | chpasswd
 printf "%s\n%s\n" "${PASSWORD}" "${PASSWORD}" | smbpasswd -a -s root >/dev/null 2>&1 || true
+/usr/share/webmin/changepass.pl /etc/webmin root "${PASSWORD}" >/dev/null 2>&1 || true
 
-# 3. Запрещаем Webmin уходить в фон
+# 3. Запрещаем Webmin уходить в фон и отключаем PAM
 if ! grep -q "nofork=" /etc/webmin/miniserv.conf; then
     echo "nofork=1" >> /etc/webmin/miniserv.conf
 fi
+sed -i '/^no_pam=/d' /etc/webmin/miniserv.conf
+echo "no_pam=1" >> /etc/webmin/miniserv.conf
 
-# 4. Базовые сетевые настройки Webmin, WebSocket и обновление графиков в реальном времени
+# 4. Базовые сетевые настройки Webmin и поддержка WebSocket
 sed -i '/^referers_none=/d' /etc/webmin/config
 echo "referers_none=1" >> /etc/webmin/config
 sed -i '/^relative_redir=/d' /etc/webmin/config
@@ -118,13 +121,6 @@ sed -i '/^cookie_same_site=/d' /etc/webmin/miniserv.conf
 echo "cookie_same_site=None" >> /etc/webmin/miniserv.conf
 sed -i '/^websockets=/d' /etc/webmin/miniserv.conf
 echo "websockets=1" >> /etc/webmin/miniserv.conf
-
-# Включаем обновление статистики в реальном времени для темы Authentic Theme
-mkdir -p /etc/webmin/authentic-theme
-touch /etc/webmin/authentic-theme/settings.js
-if ! grep -q "settings_sysinfo_real_time_status" /etc/webmin/authentic-theme/settings.js; then
-    echo "settings_sysinfo_real_time_status = true;" >> /etc/webmin/authentic-theme/settings.js
-fi
 
 # Очищаем старые настройки путей, сессий, автовхода и ограничений IP перед выбором режима
 sed -i '/^webprefix=/d' /etc/webmin/config
@@ -160,13 +156,11 @@ if bashio::config.true 'ssl'; then
         bashio::log.warning "Файлы ${CERTFILE} или ${KEYFILE} не найдены. Используется встроенный сертификат Webmin."
     fi
 else
-    # РЕЖИМ 2: Работа внутри боковой панели Home Assistant (Ingress + сессионный автовход по X-Ingress-User)
-    bashio::log.info "Режим SSL выключен: работа внутри боковой панели Home Assistant с полноценной сессией"
+    # РЕЖИМ 2: Работа внутри боковой панели Home Assistant (Ingress + HTTP Basic Auth окно браузера)
+    bashio::log.info "Режим SSL выключен: работа внутри боковой панели Home Assistant (session=0)"
     sed -i 's/^ssl=.*/ssl=0/' /etc/webmin/miniserv.conf
     echo "ssl_redirect=0" >> /etc/webmin/miniserv.conf
-    echo "session=1" >> /etc/webmin/miniserv.conf
-    echo "remoteuser=X-Ingress-User" >> /etc/webmin/miniserv.conf
-    echo "userfile_remote=root" >> /etc/webmin/miniserv.conf
+    echo "session=0" >> /etc/webmin/miniserv.conf
     echo "allow=172.30.32.2 127.0.0.1" >> /etc/webmin/miniserv.conf
 
     INGRESS_PATH=$(bashio::addon.ingress_entry)
