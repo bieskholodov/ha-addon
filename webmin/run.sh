@@ -105,7 +105,7 @@ chmod 600 /etc/webmin/miniserv.users
 echo "root: *" > /etc/webmin/webmin.acl
 chmod 600 /etc/webmin/webmin.acl
 
-# 3. Запрещаем Webmin уходить в фон и возвращаем стандартную проверку PAM/shadow
+# 3. Запрещаем Webmin уходить в фон и включаем стандартную сессионную авторизацию
 if ! grep -q "nofork=" /etc/webmin/miniserv.conf; then
     echo "nofork=1" >> /etc/webmin/miniserv.conf
 fi
@@ -113,40 +113,34 @@ sed -i '/^no_pam=/d' /etc/webmin/miniserv.conf
 sed -i '/^userfile=/d' /etc/webmin/miniserv.conf
 echo "userfile=/etc/webmin/miniserv.users" >> /etc/webmin/miniserv.conf
 
-# 4. Базовые сетевые настройки Webmin
+# 4. Очищаем все следы настроек Ingress и восстанавливаем стандартный режим Webmin
 sed -i '/^referers_none=/d' /etc/webmin/config
 echo "referers_none=1" >> /etc/webmin/config
 sed -i '/^relative_redir=/d' /etc/webmin/config
-echo "relative_redir=1" >> /etc/webmin/config
-
-sed -i '/^xframe_options=/d' /etc/webmin/miniserv.conf
-echo "xframe_options=0" >> /etc/webmin/miniserv.conf
-sed -i '/^trust_real_ip=/d' /etc/webmin/miniserv.conf
-echo "trust_real_ip=0" >> /etc/webmin/miniserv.conf
-sed -i '/^cookie_same_site=/d' /etc/webmin/miniserv.conf
-echo "cookie_same_site=None" >> /etc/webmin/miniserv.conf
-
-# Очищаем старые настройки путей, сессий и ограничений IP перед выбором режима
 sed -i '/^webprefix=/d' /etc/webmin/config
 sed -i '/^webprefixnoredir=/d' /etc/webmin/config
+
 sed -i '/^cookiepath=/d' /etc/webmin/miniserv.conf
+sed -i '/^cookie_same_site=/d' /etc/webmin/miniserv.conf
+sed -i '/^xframe_options=/d' /etc/webmin/miniserv.conf
+sed -i '/^trust_real_ip=/d' /etc/webmin/miniserv.conf
 sed -i '/^ssl_redirect=/d' /etc/webmin/miniserv.conf
 sed -i '/^session=/d' /etc/webmin/miniserv.conf
+echo "session=1" >> /etc/webmin/miniserv.conf
 sed -i '/^always_auth_user=/d' /etc/webmin/miniserv.conf
 sed -i '/^anonymous=/d' /etc/webmin/miniserv.conf
+sed -i '/^remoteuser=/d' /etc/webmin/miniserv.conf
+sed -i '/^userfile_remote=/d' /etc/webmin/miniserv.conf
 sed -i '/^allow=/d' /etc/webmin/miniserv.conf
+sed -i '/^websockets=/d' /etc/webmin/miniserv.conf
+echo "websockets=1" >> /etc/webmin/miniserv.conf
 
-# 5. Переключение режима в зависимости от опции SSL
+# 5. Настройка SSL из параметров аддона
 if bashio::config.true 'ssl'; then
-    # РЕЖИМ 1: Прямой доступ по HTTPS (вход строго по паролю с формой сессии, Ingress отключен)
-    bashio::log.info "Режим SSL включен: прямой вход по https://<IP>:10000/ с запросом пароля"
     CERTFILE="/ssl/$(bashio::config 'certfile')"
     KEYFILE="/ssl/$(bashio::config 'keyfile')"
 
     sed -i 's/^ssl=.*/ssl=1/' /etc/webmin/miniserv.conf
-    echo "ssl_redirect=1" >> /etc/webmin/miniserv.conf
-    echo "session=1" >> /etc/webmin/miniserv.conf
-    echo "cookiepath=/" >> /etc/webmin/miniserv.conf
 
     if [ -f "${CERTFILE}" ] && [ -f "${KEYFILE}" ]; then
         bashio::log.info "Подключение пользовательских SSL-сертификатов из /ssl..."
@@ -158,19 +152,8 @@ if bashio::config.true 'ssl'; then
         bashio::log.warning "Файлы ${CERTFILE} или ${KEYFILE} не найдены. Используется встроенный сертификат Webmin."
     fi
 else
-    # РЕЖИМ 2: Работа внутри боковой панели Home Assistant (Ingress + окно входа браузера)
-    bashio::log.info "Режим SSL выключен: работа внутри боковой панели Home Assistant (session=0)"
+    bashio::log.info "SSL отключен. Webmin работает по HTTP на порту 10000."
     sed -i 's/^ssl=.*/ssl=0/' /etc/webmin/miniserv.conf
-    echo "ssl_redirect=0" >> /etc/webmin/miniserv.conf
-    echo "session=0" >> /etc/webmin/miniserv.conf
-
-    INGRESS_PATH=$(bashio::addon.ingress_entry)
-    if [ -n "${INGRESS_PATH}" ]; then
-        bashio::log.info "Путь Ingress: ${INGRESS_PATH}"
-        echo "webprefix=${INGRESS_PATH}" >> /etc/webmin/config
-        echo "webprefixnoredir=1" >> /etc/webmin/config
-        echo "cookiepath=/" >> /etc/webmin/miniserv.conf
-    fi
 fi
 
 # 6. Запуск фоновых служб Cron, Samba и SSH
