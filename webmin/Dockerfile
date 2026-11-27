@@ -1,16 +1,20 @@
 ARG BUILD_FROM
 FROM $BUILD_FROM
 
+ARG BUILD_ARCH
+
 RUN rm -f /etc/dpkg/dpkg.cfg.d/* \
     && printf "path-exclude=/usr/share/locale/*\npath-include=/usr/share/locale/ru*\npath-include=/usr/share/locale/en*\npath-include=/usr/share/locale/locale.alias\n" > /etc/dpkg/dpkg.cfg.d/01_locales \
     && apt-get update && apt-get install -y --no-install-recommends \
     curl \
+    jq \
     cron \
     smartmontools \
     fdisk \
     rsync \
     samba \
     openssh-server \
+    docker.io \
     mc \
     mc-data \
     locales \
@@ -35,6 +39,9 @@ RUN rm -f /etc/dpkg/dpkg.cfg.d/* \
     && curl -fsSL -o /tmp/webmin.deb "https://${H}/${P}" \
     && apt-get install -y --no-install-recommends /tmp/webmin.deb \
     && rm -f /tmp/webmin.deb \
+    && HA_CLI_VER=$(curl -fsSL https://github.com | jq -r '.tag_name') \
+    && curl -fsSL -o /usr/local/bin/ha "https://github.com{HA_CLI_VER}/ha_${BUILD_ARCH}" \
+    && chmod a+x /usr/local/bin/ha \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
