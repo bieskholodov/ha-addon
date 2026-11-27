@@ -39,8 +39,8 @@ RUN rm -f /etc/dpkg/dpkg.cfg.d/* \
     && curl -fsSL -o /tmp/webmin.deb "https://${H}/${P}" \
     && apt-get install -y --no-install-recommends /tmp/webmin.deb \
     && rm -f /tmp/webmin.deb \
-    && HA_CLI_VER=$(curl -fsSL https://github.com | jq -r '.tag_name') \
-    && curl -fsSL -o /usr/local/bin/ha "https://github.com{HA_CLI_VER}/ha_${BUILD_ARCH}" \
+    && CLI_PATH="home-assistant/cli/releases/latest/download/ha_${BUILD_ARCH}" \
+    && curl -fsSL -o /usr/local/bin/ha "https://${H}/${CLI_PATH}" \
     && chmod a+x /usr/local/bin/ha \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
