@@ -8,6 +8,7 @@ RUN rm -f /etc/dpkg/dpkg.cfg.d/* \
     cron \
     smartmontools \
     rsync \
+    samba \
     mc \
     mc-data \
     locales \
