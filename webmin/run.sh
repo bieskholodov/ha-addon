@@ -44,7 +44,7 @@ fi
 rm -rf /etc/webmin
 ln -s "${PERSIST_DIR}/etc_webmin" /etc/webmin
 
-# Переносим задания Cron
+# Переносим задания Cron и восстанавливаем строгие права
 if [ -d /var/spool/cron/crontabs ] && [ ! -L /var/spool/cron/crontabs ]; then
     cp -a /var/spool/cron/crontabs/. "${PERSIST_DIR}/cron_tabs/" 2>/dev/null || true
     rm -rf /var/spool/cron/crontabs
@@ -104,11 +104,18 @@ if ! grep -q "nofork=" /etc/webmin/miniserv.conf; then
     echo "nofork=1" >> /etc/webmin/miniserv.conf
 fi
 
-# 4. Отключаем строгую проверку Referer и разрешаем работу в iframe внутри Home Assistant
+# 4. Отключаем строгую проверку Referer и настраиваем работу внутри iframe по HTTPS (Ingress)
 sed -i '/^referers_none=/d' /etc/webmin/config
 echo "referers_none=1" >> /etc/webmin/config
+sed -i '/^relative_redir=/d' /etc/webmin/config
+echo "relative_redir=1" >> /etc/webmin/config
+
 sed -i '/^xframe_options=/d' /etc/webmin/miniserv.conf
 echo "xframe_options=0" >> /etc/webmin/miniserv.conf
+sed -i '/^trust_real_ip=/d' /etc/webmin/miniserv.conf
+echo "trust_real_ip=1" >> /etc/webmin/miniserv.conf
+sed -i '/^cookie_same_site=/d' /etc/webmin/miniserv.conf
+echo "cookie_same_site=None" >> /etc/webmin/miniserv.conf
 
 # 5. Настройка Ingress для открытия внутри боковой панели Home Assistant
 INGRESS_PATH=$(bashio::addon.ingress_entry)
@@ -120,29 +127,14 @@ if [ -n "${INGRESS_PATH}" ]; then
     bashio::log.info "Настройка Ingress по пути: ${INGRESS_PATH}"
     echo "webprefix=${INGRESS_PATH}" >> /etc/webmin/config
     echo "webprefixnoredir=1" >> /etc/webmin/config
-    echo "cookiepath=${INGRESS_PATH}" >> /etc/webmin/miniserv.conf
+    echo "cookiepath=/" >> /etc/webmin/miniserv.conf
 fi
 
-# 6. Настройка SSL из параметров аддона (для Ingress рекомендуется ssl: false)
-if bashio::config.true 'ssl'; then
-    CERTFILE="/ssl/$(bashio::config 'certfile')"
-    KEYFILE="/ssl/$(bashio::config 'keyfile')"
-
-    sed -i 's/^ssl=.*/ssl=1/' /etc/webmin/miniserv.conf
-
-    if [ -f "${CERTFILE}" ] && [ -f "${KEYFILE}" ]; then
-        bashio::log.info "Подключение пользовательских SSL-сертификатов из /ssl..."
-        sed -i '/^keyfile=/d' /etc/webmin/miniserv.conf
-        sed -i '/^certfile=/d' /etc/webmin/miniserv.conf
-        echo "keyfile=${KEYFILE}" >> /etc/webmin/miniserv.conf
-        echo "certfile=${CERTFILE}" >> /etc/webmin/miniserv.conf
-    else
-        bashio::log.warning "Файлы ${CERTFILE} или ${KEYFILE} не найдены. Используется встроенный сертификат Webmin."
-    fi
-else
-    bashio::log.info "SSL отключен. Webmin работает по HTTP (оптимально для Ingress)."
-    sed -i 's/^ssl=.*/ssl=0/' /etc/webmin/miniserv.conf
-fi
+# 6. Принудительно отключаем внутренний SSL Webmin для совместимости с прокси Ingress
+bashio::log.info "Отключение внутреннего SSL Webmin для работы через Ingress..."
+sed -i 's/^ssl=.*/ssl=0/' /etc/webmin/miniserv.conf
+sed -i '/^ssl_redirect=/d' /etc/webmin/miniserv.conf
+echo "ssl_redirect=0" >> /etc/webmin/miniserv.conf
 
 # 7. Запуск фоновых служб Cron, Samba и SSH
 bashio::log.info "Запуск службы Cron..."
