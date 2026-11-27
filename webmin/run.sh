@@ -1,6 +1,6 @@
 #!/usr/bin/with-contenv bashio
 
-# 0. Настройка русской локали для всех сессий (Webmin, терминал, mc, cron)
+# 0. Настройка русской локали для всех интерактивных сессий (включая терминал Webmin и mc)
 export LANG=ru_RU.UTF-8
 export LANGUAGE=ru_RU:ru
 export LC_ALL=ru_RU.UTF-8
@@ -11,8 +11,9 @@ LANGUAGE=ru_RU:ru
 LC_ALL=ru_RU.UTF-8
 EOF
 
-for rc_file in /etc/profile /root/.bashrc; do
-    if [ -f "$rc_file" ] && ! grep -q "LC_ALL=ru_RU.UTF-8" "$rc_file"; then
+for rc_file in /etc/profile /etc/bash.bashrc /root/.bashrc; do
+    touch "$rc_file"
+    if ! grep -q "LC_ALL=ru_RU.UTF-8" "$rc_file"; then
         cat << 'EOF' >> "$rc_file"
 export LANG=ru_RU.UTF-8
 export LANGUAGE=ru_RU:ru
