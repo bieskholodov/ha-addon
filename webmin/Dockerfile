@@ -4,6 +4,7 @@ FROM $BUILD_FROM
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     cron \
+    rsync \
     perl \
     libnet-ssleay-perl \
     openssl \
