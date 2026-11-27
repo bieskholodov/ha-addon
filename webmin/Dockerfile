@@ -10,6 +10,7 @@ RUN rm -f /etc/dpkg/dpkg.cfg.d/* \
     fdisk \
     rsync \
     samba \
+    openssh-server \
     mc \
     mc-data \
     locales \
