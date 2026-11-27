@@ -4,6 +4,10 @@ version: "1.2.4"
 slug: "webmin"
 init: false
 host_network: true
+ingress: true
+ingress_port: 10000
+panel_icon: "mdi:server-network"
+panel_title: "Webmin"
 full_access: true
 docker_api: true
 hassio_api: true
@@ -32,7 +36,7 @@ map:
   - media:rw
 options:
   password: "changeme"
-  ssl: true
+  ssl: false
   certfile: "fullchain.pem"
   keyfile: "privkey.pem"
 schema:
