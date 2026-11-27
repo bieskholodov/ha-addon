@@ -1,6 +1,6 @@
 name: "Webmin"
 description: "Веб-интерфейс для управления файлами, Samba, SSH и сервисами"
-version: "1.4.0"
+version: "1.4.1"
 slug: "webmin"
 init: false
 host_network: true
