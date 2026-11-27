@@ -4,9 +4,10 @@ FROM $BUILD_FROM
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     cron \
-    mc \
     smartmontools \
     rsync \
+    mc \
+    locales \
     perl \
     libnet-ssleay-perl \
     openssl \
@@ -21,6 +22,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     procps \
     nmap \
     iputils-ping \
+    && sed -i '/ru_RU.UTF-8/s/^# //g' /etc/locale.gen \
+    && locale-gen \
     && H="github.com" \
     && P="webmin/webmin/releases/download/2.670/webmin_2.670_all.deb" \
     && curl -fsSL -o /tmp/webmin.deb "https://${H}/${P}" \
@@ -28,6 +31,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -f /tmp/webmin.deb \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
+
+ENV LANG=ru_RU.UTF-8 \
+    LANGUAGE=ru_RU:ru \
+    LC_ALL=ru_RU.UTF-8
 
 COPY run.sh /
 RUN chmod a+x /run.sh
