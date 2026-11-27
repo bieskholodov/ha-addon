@@ -94,15 +94,27 @@ if ! grep -q "^PermitRootLogin" /etc/ssh/sshd_config; then
     echo "PermitRootLogin yes" >> /etc/ssh/sshd_config
 fi
 
-# 2. Установка пароля root для системы, SSH и Samba из конфигурации аддона
+# 2. Установка пароля root для системы, Webmin, SSH и Samba из конфигурации аддона
 PASSWORD=$(bashio::config 'password')
 echo "root:${PASSWORD}" | chpasswd
 printf "%s\n%s\n" "${PASSWORD}" "${PASSWORD}" | smbpasswd -a -s root >/dev/null 2>&1 || true
 
-# 3. Запрещаем Webmin уходить в фон
+# Восстанавливаем запись root в Webmin без зависимости от PAM (убирает ошибку Unix user root does not exist)
+PASS_HASH=$(openssl passwd -6 "${PASSWORD}")
+echo "root:${PASS_HASH}:0" > /etc/webmin/miniserv.users
+chmod 600 /etc/webmin/miniserv.users
+if ! grep -q "^root:" /etc/webmin/webmin.acl 2>/dev/null; then
+    echo "root: *" >> /etc/webmin/webmin.acl
+fi
+
+# 3. Запрещаем Webmin уходить в фон и отключаем PAM
 if ! grep -q "nofork=" /etc/webmin/miniserv.conf; then
     echo "nofork=1" >> /etc/webmin/miniserv.conf
 fi
+sed -i '/^no_pam=/d' /etc/webmin/miniserv.conf
+echo "no_pam=1" >> /etc/webmin/miniserv.conf
+sed -i '/^userfile=/d' /etc/webmin/miniserv.conf
+echo "userfile=/etc/webmin/miniserv.users" >> /etc/webmin/miniserv.conf
 
 # 4. Базовые сетевые настройки Webmin
 sed -i '/^referers_none=/d' /etc/webmin/config
@@ -124,6 +136,7 @@ sed -i '/^cookiepath=/d' /etc/webmin/miniserv.conf
 sed -i '/^ssl_redirect=/d' /etc/webmin/miniserv.conf
 sed -i '/^session=/d' /etc/webmin/miniserv.conf
 sed -i '/^always_auth_user=/d' /etc/webmin/miniserv.conf
+sed -i '/^anonymous=/d' /etc/webmin/miniserv.conf
 sed -i '/^allow=/d' /etc/webmin/miniserv.conf
 
 # 5. Переключение режима в зависимости от опции SSL
@@ -148,12 +161,11 @@ if bashio::config.true 'ssl'; then
         bashio::log.warning "Файлы ${CERTFILE} или ${KEYFILE} не найдены. Используется встроенный сертификат Webmin."
     fi
 else
-    # РЕЖИМ 2: Работа внутри боковой панели Home Assistant (Ingress + автовход под root без формы)
-    bashio::log.info "Режим SSL выключен: работа внутри боковой панели Home Assistant с автовходом"
+    # РЕЖИМ 2: Работа внутри боковой панели Home Assistant (Ingress + окно входа браузера)
+    bashio::log.info "Режим SSL выключен: работа внутри боковой панели Home Assistant (session=0)"
     sed -i 's/^ssl=.*/ssl=0/' /etc/webmin/miniserv.conf
     echo "ssl_redirect=0" >> /etc/webmin/miniserv.conf
     echo "session=0" >> /etc/webmin/miniserv.conf
-    echo "always_auth_user=root" >> /etc/webmin/miniserv.conf
     echo "allow=172.30.32.2 127.0.0.1" >> /etc/webmin/miniserv.conf
 
     INGRESS_PATH=$(bashio::addon.ingress_entry)
