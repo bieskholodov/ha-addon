@@ -99,20 +99,17 @@ PASSWORD=$(bashio::config 'password')
 echo "root:${PASSWORD}" | chpasswd
 printf "%s\n%s\n" "${PASSWORD}" "${PASSWORD}" | smbpasswd -a -s root >/dev/null 2>&1 || true
 
-# Восстанавливаем запись root в Webmin без зависимости от PAM (убирает ошибку Unix user root does not exist)
-PASS_HASH=$(openssl passwd -6 "${PASSWORD}")
-echo "root:${PASS_HASH}:0" > /etc/webmin/miniserv.users
+# Восстанавливаем штатную запись root:x:0 в Webmin (именно буква x включает проверку системного root)
+echo "root:x:0" > /etc/webmin/miniserv.users
 chmod 600 /etc/webmin/miniserv.users
-if ! grep -q "^root:" /etc/webmin/webmin.acl 2>/dev/null; then
-    echo "root: *" >> /etc/webmin/webmin.acl
-fi
+echo "root: *" > /etc/webmin/webmin.acl
+chmod 600 /etc/webmin/webmin.acl
 
-# 3. Запрещаем Webmin уходить в фон и отключаем PAM
+# 3. Запрещаем Webmin уходить в фон и возвращаем стандартную проверку PAM/shadow
 if ! grep -q "nofork=" /etc/webmin/miniserv.conf; then
     echo "nofork=1" >> /etc/webmin/miniserv.conf
 fi
 sed -i '/^no_pam=/d' /etc/webmin/miniserv.conf
-echo "no_pam=1" >> /etc/webmin/miniserv.conf
 sed -i '/^userfile=/d' /etc/webmin/miniserv.conf
 echo "userfile=/etc/webmin/miniserv.users" >> /etc/webmin/miniserv.conf
 
