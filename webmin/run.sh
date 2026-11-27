@@ -134,6 +134,8 @@ sed -i '/^ssl_redirect=/d' /etc/webmin/miniserv.conf
 sed -i '/^session=/d' /etc/webmin/miniserv.conf
 sed -i '/^always_auth_user=/d' /etc/webmin/miniserv.conf
 sed -i '/^anonymous=/d' /etc/webmin/miniserv.conf
+sed -i '/^remoteuser=/d' /etc/webmin/miniserv.conf
+sed -i '/^userfile_remote=/d' /etc/webmin/miniserv.conf
 sed -i '/^allow=/d' /etc/webmin/miniserv.conf
 
 # 5. Переключение режима в зависимости от опции SSL
@@ -158,12 +160,13 @@ if bashio::config.true 'ssl'; then
         bashio::log.warning "Файлы ${CERTFILE} или ${KEYFILE} не найдены. Используется встроенный сертификат Webmin."
     fi
 else
-    # РЕЖИМ 2: Работа внутри боковой панели Home Assistant (Ingress + автовход под root)
-    bashio::log.info "Режим SSL выключен: работа внутри боковой панели Home Assistant с автовходом"
+    # РЕЖИМ 2: Работа внутри боковой панели Home Assistant (Ingress + сессионный автовход по X-Ingress-User)
+    bashio::log.info "Режим SSL выключен: работа внутри боковой панели Home Assistant с полноценной сессией"
     sed -i 's/^ssl=.*/ssl=0/' /etc/webmin/miniserv.conf
     echo "ssl_redirect=0" >> /etc/webmin/miniserv.conf
     echo "session=1" >> /etc/webmin/miniserv.conf
-    echo "anonymous=/=root" >> /etc/webmin/miniserv.conf
+    echo "remoteuser=X-Ingress-User" >> /etc/webmin/miniserv.conf
+    echo "userfile_remote=root" >> /etc/webmin/miniserv.conf
     echo "allow=172.30.32.2 127.0.0.1" >> /etc/webmin/miniserv.conf
 
     INGRESS_PATH=$(bashio::addon.ingress_entry)
