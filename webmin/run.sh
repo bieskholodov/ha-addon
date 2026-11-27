@@ -104,17 +104,26 @@ if ! grep -q "nofork=" /etc/webmin/miniserv.conf; then
     echo "nofork=1" >> /etc/webmin/miniserv.conf
 fi
 
-# 4. Отключаем строгую проверку Referer
-if ! grep -q "referers_none=" /etc/webmin/config; then
-    echo "referers_none=1" >> /etc/webmin/config
-fi
+# 4. Отключаем строгую проверку Referer и разрешаем работу в iframe внутри Home Assistant
+sed -i '/^referers_none=/d' /etc/webmin/config
+echo "referers_none=1" >> /etc/webmin/config
+sed -i '/^xframe_options=/d' /etc/webmin/miniserv.conf
+echo "xframe_options=0" >> /etc/webmin/miniserv.conf
 
-# 5. Очищаем старые настройки Ingress
+# 5. Настройка Ingress для открытия внутри боковой панели Home Assistant
+INGRESS_PATH=$(bashio::addon.ingress_entry)
 sed -i '/^webprefix=/d' /etc/webmin/config
 sed -i '/^webprefixnoredir=/d' /etc/webmin/config
 sed -i '/^cookiepath=/d' /etc/webmin/miniserv.conf
 
-# 6. Настройка SSL из параметров аддона
+if [ -n "${INGRESS_PATH}" ]; then
+    bashio::log.info "Настройка Ingress по пути: ${INGRESS_PATH}"
+    echo "webprefix=${INGRESS_PATH}" >> /etc/webmin/config
+    echo "webprefixnoredir=1" >> /etc/webmin/config
+    echo "cookiepath=${INGRESS_PATH}" >> /etc/webmin/miniserv.conf
+fi
+
+# 6. Настройка SSL из параметров аддона (для Ingress рекомендуется ssl: false)
 if bashio::config.true 'ssl'; then
     CERTFILE="/ssl/$(bashio::config 'certfile')"
     KEYFILE="/ssl/$(bashio::config 'keyfile')"
@@ -131,7 +140,7 @@ if bashio::config.true 'ssl'; then
         bashio::log.warning "Файлы ${CERTFILE} или ${KEYFILE} не найдены. Используется встроенный сертификат Webmin."
     fi
 else
-    bashio::log.info "SSL отключен. Webmin работает по HTTP."
+    bashio::log.info "SSL отключен. Webmin работает по HTTP (оптимально для Ingress)."
     sed -i 's/^ssl=.*/ssl=0/' /etc/webmin/miniserv.conf
 fi
 
