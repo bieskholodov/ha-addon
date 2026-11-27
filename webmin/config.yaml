@@ -1,10 +1,14 @@
 name: "Webmin"
 description: "Веб-интерфейс для управления файлами и сервисами в контейнере"
-version: "1.2.0"
+version: "1.2.1"
 slug: "webmin"
 init: false
 host_network: true
 full_access: true
+apparmor: false
+privileged:
+  - SYS_RAWIO
+  - SYS_ADMIN
 webui: "[PROTO:ssl]://[HOST]:[PORT:10000]"
 ports:
   10000/tcp: 10000
