@@ -4,7 +4,7 @@ FROM $BUILD_FROM
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     cron \
-    smartctl \
+    smartmontools \
     rsync \
     perl \
     libnet-ssleay-perl \
