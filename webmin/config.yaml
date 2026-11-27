@@ -1,6 +1,6 @@
 name: "Webmin"
 description: "Веб-интерфейс для управления файлами и сервисами в контейнере"
-version: "1.1.5"
+version: "1.1.6"
 slug: "webmin"
 init: false
 host_network: true
