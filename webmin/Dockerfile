@@ -1,7 +1,8 @@
 ARG BUILD_FROM
 FROM $BUILD_FROM
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN rm -f /etc/dpkg/dpkg.cfg.d/excludes /etc/dpkg/dpkg.cfg.d/*locale* \
+    && apt-get update && apt-get install -y --no-install-recommends \
     curl \
     cron \
     smartmontools \
@@ -24,6 +25,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     iputils-ping \
     && sed -i '/ru_RU.UTF-8/s/^# //g' /etc/locale.gen \
     && locale-gen \
+    && update-locale LANG=ru_RU.UTF-8 LC_ALL=ru_RU.UTF-8 \
     && H="github.com" \
     && P="webmin/webmin/releases/download/2.670/webmin_2.670_all.deb" \
     && curl -fsSL -o /tmp/webmin.deb "https://${H}/${P}" \
