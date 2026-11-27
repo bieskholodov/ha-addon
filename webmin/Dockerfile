@@ -1,13 +1,14 @@
 ARG BUILD_FROM
 FROM $BUILD_FROM
 
-RUN rm -f /etc/dpkg/dpkg.cfg.d/excludes /etc/dpkg/dpkg.cfg.d/*locale* \
+RUN rm -f /etc/dpkg/dpkg.cfg.d/* \
     && apt-get update && apt-get install -y --no-install-recommends \
     curl \
     cron \
     smartmontools \
     rsync \
     mc \
+    mc-data \
     locales \
     perl \
     libnet-ssleay-perl \
@@ -24,7 +25,7 @@ RUN rm -f /etc/dpkg/dpkg.cfg.d/excludes /etc/dpkg/dpkg.cfg.d/*locale* \
     nmap \
     iputils-ping \
     && sed -i '/ru_RU.UTF-8/s/^# //g' /etc/locale.gen \
-    && locale-gen \
+    && locale-gen ru_RU.UTF-8 \
     && update-locale LANG=ru_RU.UTF-8 LC_ALL=ru_RU.UTF-8 \
     && H="github.com" \
     && P="webmin/webmin/releases/download/2.670/webmin_2.670_all.deb" \
