@@ -12,6 +12,7 @@ apparmor: false
 privileged:
   - SYS_RAWIO
   - SYS_ADMIN
+  - DAC_READ_SEARCH
 webui: "[PROTO:ssl]://[HOST]:[PORT:10000]"
 arch:
   - aarch64
