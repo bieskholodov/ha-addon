@@ -46,7 +46,9 @@ RUN rm -f /etc/dpkg/dpkg.cfg.d/* \
     && curl -fsSL -o /tmp/webmin.deb "https://${H}/${P}" \
     && apt-get install -y --no-install-recommends /tmp/webmin.deb \
     && rm -f /tmp/webmin.deb \
-    && curl -fsSL -A "Mozilla/5.0" -o /tmp/vsftpd-webmin.wbm.gz "https://sourceforge.net" \
+    && SF="downloads.sourceforge.net" \
+    && SFP="project/vsftpdwebmin/vsftpdwebmin/vsftpd-1.2b/vsftpd-1.2b.wbm.gz" \
+    && curl -fsSL -A "Mozilla/5.0" -o /tmp/vsftpd-webmin.wbm.gz "https://${SF}/${SFP}" \
     && /usr/share/webmin/install-module.pl /tmp/vsftpd-webmin.wbm.gz \
     && rm -f /tmp/vsftpd-webmin.wbm.gz \
     && CLI_PATH="home-assistant/cli/releases/latest/download/ha_${BUILD_ARCH}" \
