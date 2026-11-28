@@ -8,6 +8,9 @@ RUN rm -f /etc/dpkg/dpkg.cfg.d/* \
     && apt-get update \
     && apt-get upgrade -y --no-install-recommends \
     && apt-get install -y --no-install-recommends \
+    vsftpd \
+    unfs3 \
+    rpcbind \
     curl \
     jq \
     cron \
