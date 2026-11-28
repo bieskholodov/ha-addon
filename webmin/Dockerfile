@@ -51,6 +51,9 @@ RUN rm -f /etc/dpkg/dpkg.cfg.d/* \
     && chmod a+x /usr/local/bin/ha \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
+    && curl -fsSL -o /tmp/vsftpd-webmin.wbm.gz "https://sourceforge.net" \
+    && /usr/share/webmin/install-module.pl /tmp/vsftpd-webmin.wbm.gz \
+    && rm -f /tmp/vsftpd-webmin.wbm.gz \
 
 ENV LANG=ru_RU.UTF-8 \
     LANGUAGE=ru_RU:ru \
