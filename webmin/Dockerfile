@@ -9,7 +9,8 @@ RUN rm -f /etc/dpkg/dpkg.cfg.d/* \
     && apt-get upgrade -y --no-install-recommends \
     && apt-get install -y --no-install-recommends \
     vsftpd \
-    unfs3 \
+    nfs-ganesha \
+    nfs-ganesha-vfs \
     rpcbind \
     curl \
     jq \
