@@ -28,7 +28,7 @@ EOF
     fi
 done
 
-# 1. Папка для постоянного хранения настроек Webmin, Cron, Samba и SSH (переживает обновления)
+# 1. Папка для постоянного хранения настроек Webmin, Cron, Samba, SSH, FTP и NFS (переживает обновления)
 PERSIST_DIR="/data/webmin_persist"
 mkdir -p "${PERSIST_DIR}/etc_webmin"
 mkdir -p "${PERSIST_DIR}/cron_tabs"
@@ -36,6 +36,8 @@ mkdir -p "${PERSIST_DIR}/etc_samba"
 mkdir -p "${PERSIST_DIR}/var_lib_samba"
 mkdir -p "${PERSIST_DIR}/etc_ssh"
 mkdir -p "${PERSIST_DIR}/root_ssh"
+mkdir -p "${PERSIST_DIR}/etc_ftp"
+mkdir -p "${PERSIST_DIR}/etc_nfs"
 
 # Переносим стандартные конфиги Webmin
 if [ ! -f "${PERSIST_DIR}/etc_webmin/miniserv.conf" ]; then
@@ -94,7 +96,49 @@ if ! grep -q "^PermitRootLogin" /etc/ssh/sshd_config; then
     echo "PermitRootLogin yes" >> /etc/ssh/sshd_config
 fi
 
-# 2. Установка пароля root для системы, Webmin, SSH и Samba из конфигурации аддона
+# Переносим и настраиваем конфиг FTP (vsftpd)
+if [ ! -f "${PERSIST_DIR}/etc_ftp/vsftpd.conf" ]; then
+    cat << 'EOF' > "${PERSIST_DIR}/etc_ftp/vsftpd.conf"
+listen=YES
+listen_ipv6=NO
+anonymous_enable=NO
+local_enable=YES
+write_enable=YES
+local_umask=022
+dirmessage_enable=YES
+use_localtime=YES
+xferlog_enable=YES
+connect_from_port_20=YES
+chroot_local_user=NO
+secure_chroot_dir=/var/run/vsftpd/empty
+pam_service_name=vsftpd
+pasv_enable=YES
+pasv_min_port=21100
+pasv_max_port=21110
+EOF
+fi
+rm -f /etc/vsftpd.conf
+ln -s "${PERSIST_DIR}/etc_ftp/vsftpd.conf" /etc/vsftpd.conf
+mkdir -p /var/run/vsftpd/empty
+
+# Разрешаем вход для root в FTP
+if [ -f /etc/ftpusers ]; then
+    sed -i '/^root$/d' /etc/ftpusers
+fi
+
+# Переносим и настраиваем конфиг NFS (/etc/exports)
+if [ ! -f "${PERSIST_DIR}/etc_nfs/exports" ]; then
+    cat << 'EOF' > "${PERSIST_DIR}/etc_nfs/exports"
+# Примеры расшаривания папок Home Assistant по NFS (раскомментируйте нужное):
+# /config 192.168.1.0/24(rw,no_root_squash,insecure)
+# /media  192.168.1.0/24(rw,no_root_squash,insecure)
+# /share  192.168.1.0/24(rw,no_root_squash,insecure)
+EOF
+fi
+rm -f /etc/exports
+ln -s "${PERSIST_DIR}/etc_nfs/exports" /etc/exports
+
+# 2. Установка пароля root для системы, Webmin, SSH, Samba и FTP из конфигурации аддона
 PASSWORD=$(bashio::config 'password')
 echo "root:${PASSWORD}" | chpasswd
 printf "%s\n%s\n" "${PASSWORD}" "${PASSWORD}" | smbpasswd -a -s root >/dev/null 2>&1 || true
@@ -156,7 +200,7 @@ else
     sed -i 's/^ssl=.*/ssl=0/' /etc/webmin/miniserv.conf
 fi
 
-# 6. Запуск фоновых служб Cron, Samba и SSH
+# 6. Запуск фоновых служб Cron, Samba, SSH, FTP и NFS
 bashio::log.info "Запуск службы Cron..."
 service cron start
 
@@ -166,6 +210,13 @@ service nmbd start || nmbd -D
 
 bashio::log.info "Запуск SSH-сервера..."
 service ssh start || /usr/sbin/sshd
+
+bashio::log.info "Запуск FTP-сервера (vsftpd)..."
+service vsftpd start || /usr/sbin/vsftpd /etc/vsftpd.conf &
+
+bashio::log.info "Запуск NFS-сервера (rpcbind + unfsd)..."
+service rpcbind start || /sbin/rpcbind -w
+/usr/sbin/unfsd -e /etc/exports
 
 # 7. Запуск Webmin
 bashio::log.info "Запуск Webmin..."
