@@ -1,6 +1,6 @@
 name: "Webmin"
-description: "Веб-интерфейс для управления файлами, Samba, SSH и сервисами"
-version: "2.7100"
+description: "Веб-интерфейс для управления файлами, Samba, SSH, FTP и NFS"
+version: "2.7101"
 slug: "webmin"
 init: false
 host_network: true
@@ -13,17 +13,6 @@ privileged:
   - SYS_RAWIO
   - SYS_ADMIN
 webui: "[PROTO:ssl]://[HOST]:[PORT:10000]"
-ports:
-  10000/tcp: 10000
-  21/tcp: 21
-  21100-21110/tcp: 21100-21110
-  2049/tcp: 2049
-  2049/udp: 2049
-  111/tcp: 111
-  111/udp: 111
-ports_description:
-  10000/tcp: "Веб-интерфейс Webmin"
-  22/tcp: "SSH и SFTP доступ"
 arch:
   - aarch64
   - amd64
