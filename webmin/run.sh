@@ -105,6 +105,7 @@ anonymous_enable=NO
 local_enable=YES
 write_enable=YES
 local_umask=022
+local_root=/
 dirmessage_enable=YES
 use_localtime=YES
 xferlog_enable=YES
@@ -132,6 +133,7 @@ if [ ! -f "${PERSIST_DIR}/etc_ganesha/ganesha.conf" ]; then
 NFS_Core_Param {
     Enable_NLM = false;
     Enable_RQUOTA = false;
+    Protocols = 3, 4;
 }
 
 EXPORT {
@@ -141,9 +143,15 @@ EXPORT {
     Access_Type = RW;
     Squash = No_Root_Squash;
     SecType = sys;
+    Disable_ACL = true;
     Transports = TCP, UDP;
     FSAL {
         Name = VFS;
+    }
+    CLIENT {
+        Clients = *;
+        Access_Type = RW;
+        Squash = No_Root_Squash;
     }
 }
 
@@ -154,9 +162,15 @@ EXPORT {
     Access_Type = RW;
     Squash = No_Root_Squash;
     SecType = sys;
+    Disable_ACL = true;
     Transports = TCP, UDP;
     FSAL {
         Name = VFS;
+    }
+    CLIENT {
+        Clients = *;
+        Access_Type = RW;
+        Squash = No_Root_Squash;
     }
 }
 EOF
@@ -204,6 +218,34 @@ sed -i '/^userfile_remote=/d' /etc/webmin/miniserv.conf
 sed -i '/^allow=/d' /etc/webmin/miniserv.conf
 sed -i '/^websockets=/d' /etc/webmin/miniserv.conf
 echo "websockets=1" >> /etc/webmin/miniserv.conf
+
+# 4.1. Создаём кнопки управления NFS и FTP в "Другие -> Пользовательские команды"
+mkdir -p /etc/webmin/custom
+if [ ! -f /etc/webmin/custom/1700000001.edit ]; then
+    cat << 'EOF' > /etc/webmin/custom/1700000001.edit
+id=1700000001
+desc=NFS: Редактировать конфиг (ganesha.conf)
+edit=/etc/ganesha/ganesha.conf
+user=root
+after=kill -HUP $(pidof ganesha.nfsd)
+EOF
+
+    cat << 'EOF' > /etc/webmin/custom/1700000002.cmd
+id=1700000002
+desc=NFS: Статус и список расшаренных папок
+cmd=showmount -e localhost && echo "--- Лог ganesha ---" && tail -n 20 /var/log/ganesha/ganesha.log
+user=root
+raw=0
+EOF
+
+    cat << 'EOF' > /etc/webmin/custom/1700000003.edit
+id=1700000003
+desc=FTP: Редактировать конфиг (vsftpd.conf)
+edit=/etc/vsftpd.conf
+user=root
+after=service vsftpd restart
+EOF
+fi
 
 # 5. Настройка SSL из параметров аддона
 if bashio::config.true 'ssl'; then
