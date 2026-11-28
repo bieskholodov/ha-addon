@@ -5,7 +5,9 @@ ARG BUILD_ARCH
 
 RUN rm -f /etc/dpkg/dpkg.cfg.d/* \
     && printf "path-exclude=/usr/share/locale/*\npath-include=/usr/share/locale/ru*\npath-include=/usr/share/locale/en*\npath-include=/usr/share/locale/locale.alias\n" > /etc/dpkg/dpkg.cfg.d/01_locales \
-    && apt-get update && apt-get install -y --no-install-recommends \
+    && apt-get update \
+    && apt-get upgrade -y --no-install-recommends \
+    && apt-get install -y --no-install-recommends \
     curl \
     jq \
     cron \
