@@ -46,14 +46,14 @@ RUN rm -f /etc/dpkg/dpkg.cfg.d/* \
     && curl -fsSL -o /tmp/webmin.deb "https://${H}/${P}" \
     && apt-get install -y --no-install-recommends /tmp/webmin.deb \
     && rm -f /tmp/webmin.deb \
+    && curl -fsSL -A "Mozilla/5.0" -o /tmp/vsftpd-webmin.wbm.gz "https://sourceforge.net" \
+    && /usr/share/webmin/install-module.pl /tmp/vsftpd-webmin.wbm.gz \
+    && rm -f /tmp/vsftpd-webmin.wbm.gz \
     && CLI_PATH="home-assistant/cli/releases/latest/download/ha_${BUILD_ARCH}" \
     && curl -fsSL -o /usr/local/bin/ha "https://${H}/${CLI_PATH}" \
     && chmod a+x /usr/local/bin/ha \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
-    && curl -fsSL -o /tmp/vsftpd-webmin.wbm.gz "https://sourceforge.net" \
-    && /usr/share/webmin/install-module.pl /tmp/vsftpd-webmin.wbm.gz \
-    && rm -f /tmp/vsftpd-webmin.wbm.gz \
 
 ENV LANG=ru_RU.UTF-8 \
     LANGUAGE=ru_RU:ru \
