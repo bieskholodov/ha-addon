@@ -12,7 +12,6 @@ RUN rm -f /etc/dpkg/dpkg.cfg.d/* \
     nfs-ganesha \
     nfs-ganesha-vfs \
     rpcbind \
-    libcgi-pm-perl \
     curl \
     jq \
     cron \
@@ -46,11 +45,6 @@ RUN rm -f /etc/dpkg/dpkg.cfg.d/* \
     && curl -fsSL -o /tmp/webmin.deb "https://${H}/${P}" \
     && apt-get install -y --no-install-recommends /tmp/webmin.deb \
     && rm -f /tmp/webmin.deb \
-    && SF="downloads.sourceforge.net" \
-    && SFP="project/vsftpdwebmin/vsftpdwebmin/vsftpd-1.2b/vsftpd-1.2b.wbm.gz" \
-    && curl -fsSL -A "Mozilla/5.0" -o /tmp/vsftpd-webmin.wbm.gz "https://${SF}/${SFP}" \
-    && /usr/share/webmin/install-module.pl /tmp/vsftpd-webmin.wbm.gz \
-    && rm -f /tmp/vsftpd-webmin.wbm.gz \
     && CLI_PATH="home-assistant/cli/releases/latest/download/ha_${BUILD_ARCH}" \
     && curl -fsSL -o /usr/local/bin/ha "https://${H}/${CLI_PATH}" \
     && chmod a+x /usr/local/bin/ha \
