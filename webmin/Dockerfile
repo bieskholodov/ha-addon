@@ -35,7 +35,7 @@ RUN rm -f /etc/dpkg/dpkg.cfg.d/* \
     && sed -i '/ru_RU.UTF-8/s/^# //g' /etc/locale.gen \
     && locale-gen ru_RU.UTF-8 \
     && H="github.com" \
-    && P="webmin/webmin/releases/download/2.670/webmin_2.670_all.deb" \
+    && P="webmin/webmin/releases/download/2.680/webmin_2.680_all.deb" \
     && curl -fsSL -o /tmp/webmin.deb "https://${H}/${P}" \
     && apt-get install -y --no-install-recommends /tmp/webmin.deb \
     && rm -f /tmp/webmin.deb \
