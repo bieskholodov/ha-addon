@@ -12,6 +12,7 @@ RUN rm -f /etc/dpkg/dpkg.cfg.d/* \
     nfs-ganesha \
     nfs-ganesha-vfs \
     rpcbind \
+    libcgi-pm-perl \
     curl \
     jq \
     cron \
