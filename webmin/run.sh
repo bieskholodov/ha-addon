@@ -37,7 +37,7 @@ mkdir -p "${PERSIST_DIR}/var_lib_samba"
 mkdir -p "${PERSIST_DIR}/etc_ssh"
 mkdir -p "${PERSIST_DIR}/root_ssh"
 mkdir -p "${PERSIST_DIR}/etc_ftp"
-mkdir -p "${PERSIST_DIR}/etc_nfs"
+mkdir -p "${PERSIST_DIR}/etc_ganesha"
 
 # Переносим стандартные конфиги Webmin
 if [ ! -f "${PERSIST_DIR}/etc_webmin/miniserv.conf" ]; then
@@ -126,17 +126,43 @@ if [ -f /etc/ftpusers ]; then
     sed -i '/^root$/d' /etc/ftpusers
 fi
 
-# Переносим и настраиваем конфиг NFS (/etc/exports)
-if [ ! -f "${PERSIST_DIR}/etc_nfs/exports" ]; then
-    cat << 'EOF' > "${PERSIST_DIR}/etc_nfs/exports"
-# Примеры расшаривания папок Home Assistant по NFS (раскомментируйте нужное):
-# /config 192.168.1.0/24(rw,no_root_squash,insecure)
-# /media  192.168.1.0/24(rw,no_root_squash,insecure)
-# /share  192.168.1.0/24(rw,no_root_squash,insecure)
+# Переносим и настраиваем конфиг NFS (nfs-ganesha)
+if [ ! -f "${PERSIST_DIR}/etc_ganesha/ganesha.conf" ]; then
+    cat << 'EOF' > "${PERSIST_DIR}/etc_ganesha/ganesha.conf"
+NFS_Core_Param {
+    Enable_NLM = false;
+    Enable_RQUOTA = false;
+}
+
+EXPORT {
+    Export_Id = 1;
+    Path = /media;
+    Pseudo = /media;
+    Access_Type = RW;
+    Squash = No_Root_Squash;
+    SecType = sys;
+    Transports = TCP, UDP;
+    FSAL {
+        Name = VFS;
+    }
+}
+
+EXPORT {
+    Export_Id = 2;
+    Path = /share;
+    Pseudo = /share;
+    Access_Type = RW;
+    Squash = No_Root_Squash;
+    SecType = sys;
+    Transports = TCP, UDP;
+    FSAL {
+        Name = VFS;
+    }
+}
 EOF
 fi
-rm -f /etc/exports
-ln -s "${PERSIST_DIR}/etc_nfs/exports" /etc/exports
+rm -rf /etc/ganesha
+ln -s "${PERSIST_DIR}/etc_ganesha" /etc/ganesha
 
 # 2. Установка пароля root для системы, Webmin, SSH, Samba и FTP из конфигурации аддона
 PASSWORD=$(bashio::config 'password')
@@ -214,9 +240,10 @@ service ssh start || /usr/sbin/sshd
 bashio::log.info "Запуск FTP-сервера (vsftpd)..."
 service vsftpd start || /usr/sbin/vsftpd /etc/vsftpd.conf &
 
-bashio::log.info "Запуск NFS-сервера (rpcbind + unfsd)..."
+bashio::log.info "Запуск NFS-сервера (rpcbind + ganesha.nfsd)..."
+mkdir -p /run/sendsigs.omit.d /var/run/ganesha /var/log/ganesha
 service rpcbind start || /sbin/rpcbind -w
-/usr/sbin/unfsd -e /etc/exports
+/usr/bin/ganesha.nfsd -f /etc/ganesha/ganesha.conf -L /var/log/ganesha/ganesha.log
 
 # 7. Запуск Webmin
 bashio::log.info "Запуск Webmin..."
